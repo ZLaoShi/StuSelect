@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.zfy.StuSelect.entity.Course;
+import org.zfy.StuSelect.security.JwtUserDetails;
 import org.zfy.StuSelect.service.CourseService;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -14,12 +16,19 @@ public class CourseController {
     
     private final CourseService courseService;
     
-    @GetMapping
-    public ResponseEntity<Page<Course>> listCourses(
+    @GetMapping()
+    public ResponseEntity<Page<Course>> getAvailableCourses(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
-            @RequestParam(required = false) String keyword) {
-        Page<Course> page = courseService.pageCourse(current, size, keyword);
+            @RequestParam(required = false) String keyword,
+            Authentication authentication) {
+            
+        // 从Authentication中获取用户ID
+        JwtUserDetails userDetails = (JwtUserDetails) authentication.getPrincipal();
+        Integer userId = userDetails.getId();
+        
+        // 调用Service层获取课程列表和可选状态
+        Page<Course> page = courseService.getAvailableCourses(current, size, keyword, userId);
         return ResponseEntity.ok(page);
     }
     

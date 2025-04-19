@@ -49,6 +49,7 @@ export interface Course {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  selectable?: boolean;
 }
 
 // 选课信息

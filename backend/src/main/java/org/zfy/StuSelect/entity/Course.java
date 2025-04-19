@@ -1,6 +1,7 @@
 package org.zfy.StuSelect.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -26,4 +27,7 @@ public class Course {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+     @TableField(exist = false)
+    private Boolean selectable; // 是否可选
 }

@@ -72,7 +72,7 @@
         <div class="action-buttons">
           <n-button 
             type="primary" 
-            :disabled="!canSelect(currentCourse)" 
+            :disabled="!currentCourse?.selectable"
             @click="selectCourse(currentCourse)"
             :loading="submitting"
           >
@@ -168,10 +168,8 @@ const fetchSelectedCourses = async () => {
 
 // 检查是否可以选择该课程
 const canSelect = (course: Course) => {
-  if (!course || course.status !== 'active') return false
-  if (selectedCourseIds.value.has(course.id)) return false
-  if (course.selectedCount >= course.capacity) return false
-  return true
+  if (!course) return false
+  return course.selectable === true
 }
 
 // 表格列定义
@@ -230,8 +228,8 @@ const columns = ref<DataTableColumns<Course>>([
     render(row) {
       return h(
         NTag,
-        { type: row.status === 'active' ? 'success' : 'error' },
-        { default: () => row.status === 'active' ? '可选' : '不可选' }
+        { type: row.selectable ? 'success' : 'error' },
+        { default: () => row.selectable ? '可选' : '不可选' }
       )
     }
   },
@@ -272,11 +270,11 @@ const columns = ref<DataTableColumns<Course>>([
                 tertiary: true,
                 size: 'small',
                 type: 'primary',
-                disabled: !canSelect(row) || selectedCourseIds.value.has(row.id),
+                disabled: !row.selectable, // 使用 selectable 字段决定按钮是否禁用
                 onClick: () => selectCourse(row)
               },
               { 
-                default: () => selectedCourseIds.value.has(row.id) ? '已选' : '选课'
+                default: () => row.selectable ? '选课' : '不可选'
               }
             )
           ]

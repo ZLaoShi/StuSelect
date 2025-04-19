@@ -7,6 +7,16 @@ import org.zfy.StuSelect.entity.Course;
 import java.util.List;
 
 public interface CourseService extends IService<Course> {
+     /**
+     * 获取学生可选的课程列表，自动标记哪些课程已选
+     * @param current 当前页
+     * @param size 每页大小
+     * @param keyword 搜索关键词
+     * @param userId 当前用户ID
+     * @return 课程分页结果，每个课程带有selectable标记
+     */
+    Page<Course> getAvailableCourses(long current, long size, String keyword, Integer userId);
+    
     /**
      * 分页查询课程
      * @param current 当前页
