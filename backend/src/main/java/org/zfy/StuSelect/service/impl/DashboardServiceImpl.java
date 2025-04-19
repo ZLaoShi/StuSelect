@@ -28,32 +28,45 @@ public class DashboardServiceImpl implements DashboardService {
     public StudentDashboardDTO getStudentDashboardData(Integer studentId) {
         StudentDashboardDTO dto = new StudentDashboardDTO();
         
-        // 1. 获取学生已选课程数量 - 修复 Long 到 Integer 的转换
+        // 1. 获取所有活跃课程数量
+        Long totalActiveCoursesLong = courseMapper.selectCount(
+                new LambdaQueryWrapper<Course>()
+                        .eq(Course::getStatus, "active")
+        );
+        Integer totalActiveCourses = totalActiveCoursesLong.intValue();
+        
+        // 2. 获取该学生所有状态的选课记录（包括已选、已完成、已退课）
+        List<CourseSelection> allSelections = courseSelectionMapper.selectList(
+                new LambdaQueryWrapper<CourseSelection>()
+                        .eq(CourseSelection::getStudentId, studentId)
+        );
+        
+        // 3. 统计不可选的课程数量 - 包含已选、已完成、已退课的课程
+        Set<Integer> unavailableCourseIds = allSelections.stream()
+                .map(CourseSelection::getCourseId)
+                .collect(Collectors.toSet());
+        
+        // 4. 计算可选课程数量 = 总活跃课程数 - 不可选课程数
+        dto.setAvailableCourseCount(totalActiveCourses - unavailableCourseIds.size());
+        
+        // 5. 获取学生已选课程数量 - 只统计状态为selected的课程
         Long selectedCountLong = courseSelectionMapper.selectCount(
                 new LambdaQueryWrapper<CourseSelection>()
                         .eq(CourseSelection::getStudentId, studentId)
                         .eq(CourseSelection::getStatus, "selected")
         );
-        Integer selectedCount = selectedCountLong.intValue(); // 正确转换为 Integer
+        Integer selectedCount = selectedCountLong.intValue();
         dto.setSelectedCourseCount(selectedCount);
         
-        // 2. 获取可选课程数量 - 修复 Long 到 Integer 的转换
-        Long totalActiveCoursesLong = courseMapper.selectCount(
-                new LambdaQueryWrapper<Course>()
-                        .eq(Course::getStatus, "active")
-        );
-        Integer totalActiveCourses = totalActiveCoursesLong.intValue(); // 正确转换为 Integer
-        dto.setAvailableCourseCount(totalActiveCourses - selectedCount);
-        
-        // 3. 获取课程类型分布
-        List<CourseSelection> selections = courseSelectionMapper.selectList(
+        // 3. 获取课程类型分布 - 仍然只统计已选课程的分布
+        List<CourseSelection> selectedSelections = courseSelectionMapper.selectList(
                 new LambdaQueryWrapper<CourseSelection>()
                         .eq(CourseSelection::getStudentId, studentId)
                         .eq(CourseSelection::getStatus, "selected")
         );
         
         Map<String, Integer> typeDistribution = new HashMap<>();
-        for (CourseSelection selection : selections) {
+        for (CourseSelection selection : selectedSelections) {
             Course course = courseMapper.selectById(selection.getCourseId());
             if (course != null) {
                 String type = course.getCourseType();
@@ -87,9 +100,15 @@ public class DashboardServiceImpl implements DashboardService {
         }
         dto.setRecentSelectedCourses(recentCourses);
         
-        // 5. 计算总学分 - 修复 Integer 和 float 的计算问题
+        // 5. 计算总学分 - 修改为只统计已完成课程的学分
         float totalCreditFloat = 0.0f;
-        for (CourseSelection selection : selections) {
+        List<CourseSelection> completedSelections = courseSelectionMapper.selectList(
+                new LambdaQueryWrapper<CourseSelection>()
+                        .eq(CourseSelection::getStudentId, studentId)
+                        .eq(CourseSelection::getStatus, "completed")
+        );
+        
+        for (CourseSelection selection : completedSelections) {
             Course course = courseMapper.selectById(selection.getCourseId());
             if (course != null) {
                 totalCreditFloat += course.getCredit(); // 使用 float 来累加学分
