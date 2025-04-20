@@ -44,3 +44,12 @@ export function updateCourseStatus(id: number, status: string): Promise<boolean>
     params: { status }
   })
 }
+
+// 管理员获取课程列表
+export function getCoursesForAdmin(params: { current?: number, size?: number, keyword?: string } = {}): Promise<PaginationResponse<Course>> {
+  return request({
+    url: '/courses/admin',
+    method: 'get',
+    params
+  })
+}

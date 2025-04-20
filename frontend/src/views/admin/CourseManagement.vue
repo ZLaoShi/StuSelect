@@ -478,18 +478,20 @@ onMounted(() => {
 })
 
 // 获取课程列表
-async function fetchCourses() {
+const fetchCourses = async () => {
   loading.value = true
   try {
-    const response = await course.getCourses({
+    const params = {
       current: pagination.page,
       size: pagination.pageSize,
       keyword: searchKeyword.value
-    })
+    }
+    // 使用管理员专用API
+    const response = await course.getCoursesForAdmin(params)
     
     courses.value = response.records
     pagination.pageCount = response.pages
-    
+    pagination.itemCount = response.total
   } catch (error) {
     console.error('获取课程列表失败', error)
     message.error('获取课程列表失败')

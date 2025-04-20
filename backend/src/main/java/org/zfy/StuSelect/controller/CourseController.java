@@ -32,6 +32,17 @@ public class CourseController {
         return ResponseEntity.ok(page);
     }
     
+    @GetMapping("/admin")
+    public ResponseEntity<Page<Course>> getCoursesForAdmin(
+            @RequestParam(defaultValue = "1") long current,
+            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(required = false) String keyword) {
+        
+        // 调用Service层获取全部课程，不带可选状态处理
+        Page<Course> page = courseService.pageCourse(current, size, keyword);
+        return ResponseEntity.ok(page);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Course> getCourse(@PathVariable Integer id) {
         Course course = courseService.getById(id);
